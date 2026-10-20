@@ -5,9 +5,9 @@ import domain.model.OrderedProduct;
 import domain.repository.OrderRepository;
 import infrastructure.model.OrderEnt;
 import infrastructure.model.OrderedProductEnt;
+import infrastructure.model.ProductEnt;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -64,10 +64,12 @@ public class JpaOrderRepositoryAdapter implements OrderRepository {
     }
 
     private OrderedProductEnt toEntity(OrderedProduct op, JpaProductRepository products) {
-        return new OrderedProductEnt(op.getId(),
-                products.getReference(op.getProduct().getId()),
-                op.getQuantity(),
-                op.getPriceWhenOrdered());
+        ProductEnt product = products.findByIdOptimistic(op.getProduct().getId());
+        if (product == null)
+            throw new IllegalArgumentException("Product not found: " + op.getProduct().getId());
+        if (Float.compare(product.getPrice(), op.getPriceWhenOrdered()) != 0)
+            throw new IllegalStateException("Product price changed since it was added to the order");
+        return new OrderedProductEnt(op.getId(), product, op.getQuantity(), op.getPriceWhenOrdered());
     }
 
     private Order toDomain(OrderEnt entity) {

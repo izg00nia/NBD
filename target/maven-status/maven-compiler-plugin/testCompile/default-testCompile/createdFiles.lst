@@ -1,2 +1,5 @@
+infrastructure\repository\JpaOrderRepositoryAdapterTest.class
 infrastructure\repository\OptimisticLockingTest.class
 infrastructure\repository\ConcurrentOrderUpdateTest.class
+infrastructure\repository\JpaProductRepositoryAdapterTest.class
+infrastructure\repository\BusinessRuleTest.class

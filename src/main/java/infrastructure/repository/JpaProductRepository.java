@@ -2,6 +2,7 @@ package infrastructure.repository;
 
 import infrastructure.model.ProductEnt;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import java.util.UUID;
 
 public class JpaProductRepository {
@@ -19,11 +20,11 @@ public class JpaProductRepository {
         return em.find(ProductEnt.class, id);
     }
 
-    public ProductEnt getReference(UUID id) {
-        return em.getReference(ProductEnt.class, id);
-    }
-
     public void remove(ProductEnt product) {
         em.remove(product);
+    }
+
+    public ProductEnt findByIdOptimistic(UUID id) {
+        return em.find(ProductEnt.class, id, LockModeType.OPTIMISTIC);
     }
 }

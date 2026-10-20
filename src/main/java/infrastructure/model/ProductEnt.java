@@ -35,10 +35,6 @@ public abstract class ProductEnt {
         return name;
     }
 
-    public long getVersion() {
-        return version;
-    }
-
     public void setPrice(float price) {
         this.price = price;
     }

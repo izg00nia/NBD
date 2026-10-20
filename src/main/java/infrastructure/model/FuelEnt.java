@@ -19,7 +19,4 @@ public class FuelEnt extends ProductEnt{
         return standard;
     }
 
-    public void setStandard(String standard) {
-        this.standard = standard;
-    }
 }

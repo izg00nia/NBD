@@ -20,8 +20,4 @@ public class GeneralItemEnt extends ProductEnt{
     public ItemCategoryEnt getCategory() {
         return category;
     }
-
-    public void setCategory(ItemCategoryEnt category) {
-        this.category = category;
-    }
 }

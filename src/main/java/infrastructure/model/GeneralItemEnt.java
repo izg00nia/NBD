@@ -1,6 +1,5 @@
 package infrastructure.model;
 
-import domain.model.ItemCategory;
 import jakarta.persistence.*;
 
 import java.util.UUID;
@@ -9,20 +8,20 @@ import java.util.UUID;
 public class GeneralItemEnt extends ProductEnt{
 
     @Enumerated(EnumType.STRING)
-    private ItemCategory category;
+    private ItemCategoryEnt category;
 
     protected GeneralItemEnt() { }
 
-    public GeneralItemEnt(UUID id, float price, String name, ItemCategory category) {
+    public GeneralItemEnt(UUID id, float price, String name, ItemCategoryEnt category) {
         super(id, price, name);
         this.category = category;
     }
 
-    public ItemCategory getCategory() {
+    public ItemCategoryEnt getCategory() {
         return category;
     }
 
-    public void setCategory(ItemCategory category) {
+    public void setCategory(ItemCategoryEnt category) {
         this.category = category;
     }
 }

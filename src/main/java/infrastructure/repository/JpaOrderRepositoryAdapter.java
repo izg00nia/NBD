@@ -1,14 +1,21 @@
 package infrastructure.repository;
 
-import domain.model.*;
+import domain.model.Order;
+import domain.model.OrderedProduct;
 import domain.repository.OrderRepository;
-import infrastructure.model.*;
-import jakarta.persistence.*;
-import java.util.UUID;
-import java.util.ArrayList;
-import java.util.List;
+import infrastructure.model.OrderEnt;
+import infrastructure.model.OrderedProductEnt;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 
-public class JpaOrderRepositoryAdapter implements OrderRepository{
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Consumer;
+
+public class JpaOrderRepositoryAdapter implements OrderRepository {
     private final EntityManagerFactory factory;
 
     public JpaOrderRepositoryAdapter(EntityManagerFactory factory) {
@@ -16,27 +23,23 @@ public class JpaOrderRepositoryAdapter implements OrderRepository{
     }
 
     @Override
-    public void add(Order order){
-        EntityManager em = factory.createEntityManager();
-        try {
-            em.getTransaction().begin();
-            em.persist(toEntity(order, em));
-            em.getTransaction().commit();
-        } catch (RuntimeException e) {
-            if (em.getTransaction().isActive()) em.getTransaction().rollback();
-            throw e;
-        } finally {
-            em.close();
-        }
+    public void add(Order order) {
+        inTransaction(em -> {
+            JpaProductRepository products = new JpaProductRepository(em);
+            OrderEnt entity = new OrderEnt(order.getId());
+            for (OrderedProduct op : order.getProducts()) {
+                entity.addProduct(toEntity(op, products));
+            }
+            new JpaOrderRepository(em).add(entity);
+        });
     }
 
     @Override
     public Order findById(UUID id) {
         EntityManager em = factory.createEntityManager();
         try {
-            OrderEnt entity = em.find(OrderEnt.class, id);
-            if (entity == null) return null;
-            return toDomain(entity);
+            OrderEnt entity = new JpaOrderRepository(em).findById(id);
+            return entity == null ? null : toDomain(entity);
         } finally {
             em.close();
         }
@@ -44,23 +47,46 @@ public class JpaOrderRepositoryAdapter implements OrderRepository{
 
     @Override
     public void update(Order order) {
+        inTransaction(em -> {
+            OrderEnt entity = new JpaOrderRepository(em).findByIdForUpdate(order.getId());
+            if (entity == null) throw new IllegalArgumentException("Order not found: " + order.getId());
+
+            Set<UUID> existing = new HashSet<>();
+            for (OrderedProductEnt ope : entity.getProducts()) existing.add(ope.getId());
+
+            JpaProductRepository products = new JpaProductRepository(em);
+            for (OrderedProduct op : order.getProducts()) {
+                if (!existing.contains(op.getId())) {
+                    entity.addProduct(toEntity(op, products));
+                }
+            }
+        });
+    }
+
+    private OrderedProductEnt toEntity(OrderedProduct op, JpaProductRepository products) {
+        return new OrderedProductEnt(op.getId(),
+                products.getReference(op.getProduct().getId()),
+                op.getQuantity(),
+                op.getPriceWhenOrdered());
+    }
+
+    private Order toDomain(OrderEnt entity) {
+        List<OrderedProduct> items = new ArrayList<>();
+        for (OrderedProductEnt ope : entity.getProducts()) {
+            items.add(new OrderedProduct(
+                    ope.getId(),
+                    ProductMapper.toDomain(ope.getProduct()),
+                    ope.getQuantity(),
+                    ope.getPriceWhenOrdered()));
+        }
+        return new Order(entity.getId(), items);
+    }
+
+    private void inTransaction(Consumer<EntityManager> work) {
         EntityManager em = factory.createEntityManager();
         try {
             em.getTransaction().begin();
-            OrderEnt entity = em.find(OrderEnt.class, order.getId());
-            if (entity == null) throw new IllegalArgumentException("Order not found");
-
-            entity.getProducts().removeIf(ope ->
-                    order.getProducts().stream().noneMatch(op -> op.getId().equals(ope.getId())));
-
-            for (OrderedProduct op : order.getProducts()) {
-                boolean exists = entity.getProducts().stream()
-                        .anyMatch(ope -> ope.getId().equals(op.getId()));
-                if (!exists) {
-                    ProductEnt product = em.getReference(ProductEnt.class, op.getProduct().getId());
-                    entity.addProduct(new OrderedProductEnt(op.getId(), product, op.getQuantity(), op.getPriceWhenOrdered()));
-                }
-            }
+            work.accept(em);
             em.getTransaction().commit();
         } catch (RuntimeException e) {
             if (em.getTransaction().isActive()) em.getTransaction().rollback();
@@ -68,35 +94,5 @@ public class JpaOrderRepositoryAdapter implements OrderRepository{
         } finally {
             em.close();
         }
-    }
-
-    private OrderEnt toEntity(Order order, EntityManager em) {
-        OrderEnt e = new OrderEnt(order.getId());
-        for (OrderedProduct op : order.getProducts()) {
-            ProductEnt product = em.getReference(ProductEnt.class, op.getProduct().getId());
-            e.addProduct(new OrderedProductEnt(op.getId(), product, op.getQuantity(), op.getPriceWhenOrdered()));
-        }
-        return e;
-    }
-
-    private Order toDomain(OrderEnt e) {
-        List<OrderedProduct> items = new ArrayList<>();
-        for (OrderedProductEnt ope : e.getProducts()) {
-            items.add(new OrderedProduct(
-                    ope.getId(),
-                    productToDomain(ope.getProduct()),
-                    ope.getQuantity(),
-                    ope.getPriceWhenOrdered()));
-        }
-        return new Order(e.getId(), items);
-    }
-
-    private Product productToDomain(ProductEnt product) {
-        if (product instanceof FuelEnt f) {
-            return new Fuel(f.getId(), f.getPrice(), f.getName(), f.getStandard());
-        } else if (product instanceof GeneralItemEnt g) {
-            return new GeneralItem(g.getId(), g.getPrice(), g.getName(), g.getCategory());
-        }
-        throw new IllegalArgumentException("Invalid product type");
     }
 }

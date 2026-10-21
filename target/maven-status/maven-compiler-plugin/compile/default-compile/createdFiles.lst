@@ -1,4 +1,5 @@
 infrastructure\repository\ProductMapper.class
 infrastructure\repository\JpaOrderRepository.class
+infrastructure\repository\OrderMapper.class
 infrastructure\repository\JpaProductRepository.class
 infrastructure\model\ItemCategoryEnt.class

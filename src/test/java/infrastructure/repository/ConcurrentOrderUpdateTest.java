@@ -26,8 +26,10 @@ class ConcurrentOrderUpdateTest {
         factory.close();
     }
 
+    // test sprawdzenie czy jeśli jednocześnie zamówienie edzie zmieniane przez wiele wątków to jakieś dane zostaną utracone
+    // zapewnia weryfikacje czy blokada pesymistyczna poprawnie działa
     @Test
-    void concurrentAdditionsToSameOrderAreAllPreserved() throws Exception {
+    void concurrentUpdatesArePreserved() throws Exception {
         JpaProductRepositoryAdapter products = new JpaProductRepositoryAdapter(factory);
         JpaOrderRepositoryAdapter orders = new JpaOrderRepositoryAdapter(factory);
 

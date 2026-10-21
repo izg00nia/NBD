@@ -8,9 +8,7 @@ import infrastructure.model.OrderedProductEnt;
 import infrastructure.model.ProductEnt;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -39,7 +37,7 @@ public class JpaOrderRepositoryAdapter implements OrderRepository {
         EntityManager em = factory.createEntityManager();
         try {
             OrderEnt entity = new JpaOrderRepository(em).findById(id);
-            return entity == null ? null : toDomain(entity);
+            return entity == null ? null : OrderMapper.toDomain(entity);
         } finally {
             em.close();
         }
@@ -63,26 +61,7 @@ public class JpaOrderRepositoryAdapter implements OrderRepository {
         });
     }
 
-    private OrderedProductEnt toEntity(OrderedProduct op, JpaProductRepository products) {
-        ProductEnt product = products.findByIdOptimistic(op.getProduct().getId());
-        if (product == null)
-            throw new IllegalArgumentException("Product not found: " + op.getProduct().getId());
-        if (Float.compare(product.getPrice(), op.getPriceWhenOrdered()) != 0)
-            throw new IllegalStateException("Product price changed since it was added to the order");
-        return new OrderedProductEnt(op.getId(), product, op.getQuantity(), op.getPriceWhenOrdered());
-    }
 
-    private Order toDomain(OrderEnt entity) {
-        List<OrderedProduct> items = new ArrayList<>();
-        for (OrderedProductEnt ope : entity.getProducts()) {
-            items.add(new OrderedProduct(
-                    ope.getId(),
-                    ProductMapper.toDomain(ope.getProduct()),
-                    ope.getQuantity(),
-                    ope.getPriceWhenOrdered()));
-        }
-        return new Order(entity.getId(), items);
-    }
 
     private void inTransaction(Consumer<EntityManager> work) {
         EntityManager em = factory.createEntityManager();
@@ -96,5 +75,14 @@ public class JpaOrderRepositoryAdapter implements OrderRepository {
         } finally {
             em.close();
         }
+    }
+
+    private OrderedProductEnt toEntity(OrderedProduct op, JpaProductRepository products) {
+        ProductEnt product = products.findByIdOptimistic(op.getProduct().getId());
+        if (product == null)
+            throw new IllegalArgumentException("Product not found: " + op.getProduct().getId());
+        if (Float.compare(product.getPrice(), op.getPriceWhenOrdered()) != 0)
+            throw new IllegalStateException("Product price changed since it was added to the order");
+        return OrderMapper.toEntity(op, product);
     }
 }

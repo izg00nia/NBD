@@ -28,8 +28,9 @@ class JpaProductRepositoryAdapterTest {
         products = new JpaProductRepositoryAdapter(factory);
     }
 
+    //zapisuje fuel i sprawdza czy po odczycie nadal jest fuel
     @Test
-    void fuelIsStoredAndLoadedAsFuel() {
+    void isFuelLoadedAsFuel() {
         UUID id = UUID.randomUUID();
         products.add(new Fuel(id, 5.0f, "Benzyna", "95"));
 
@@ -40,8 +41,9 @@ class JpaProductRepositoryAdapterTest {
         assertEquals("95", ((Fuel) loaded).getStandard());
     }
 
+    //zapisuje generalitem i sprawdza czy po odczycie nadal jest generalitem
     @Test
-    void generalItemIsStoredAndLoadedAsGeneralItem() {
+    void isGeneralItemLoadedAsGeneralItem() {
         UUID id = UUID.randomUUID();
         products.add(new GeneralItem(id, 12.0f, "Kawa", ItemCategory.COFFEE));
 
@@ -51,8 +53,9 @@ class JpaProductRepositoryAdapterTest {
         assertEquals(ItemCategory.COFFEE, ((GeneralItem) loaded).getCategory());
     }
 
+    // zmienia cene i nazwe produktu i sprawdza czy sie zmienila
     @Test
-    void updateChangesPriceAndName() {
+    void update() {
         UUID id = UUID.randomUUID();
         products.add(new Fuel(id, 5.0f, "Benzyna", "95"));
 
@@ -66,8 +69,9 @@ class JpaProductRepositoryAdapterTest {
         assertEquals("Benzyna 95", reloaded.getName());
     }
 
+    // usuwa produkt i sprawdza czy findbyid jest null
     @Test
-    void deleteRemovesProduct() {
+    void delete() {
         UUID id = UUID.randomUUID();
         products.add(new GeneralItem(id, 3.0f, "Cola", ItemCategory.DRINK));
 
@@ -76,8 +80,9 @@ class JpaProductRepositoryAdapterTest {
         assertNull(products.findById(id));
     }
 
+    // findbyid dla nieistniejacego id zwraca null
     @Test
-    void findByIdReturnsNullForUnknownId() {
+    void findByIdReturnsNull() {
         assertNull(products.findById(UUID.randomUUID()));
     }
 }

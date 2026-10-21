@@ -22,8 +22,9 @@ class OptimisticLockingTest {
         factory.close();
     }
 
+    // testuje optymistyczne blokowanie, dwie transakcje wczytuja ten sam produkt i obie zmieniaja cene ale tylko jedna z nich zostaje zatwierdzona
     @Test
-    void concurrentPriceChangeOnSameProductIsRejected() {
+    void concurrentPriceChangeIsRejected() {
         UUID id = UUID.randomUUID();
         new JpaProductRepositoryAdapter(factory).add(new Fuel(id, 5.0f, "Benzyna", "95"));
 

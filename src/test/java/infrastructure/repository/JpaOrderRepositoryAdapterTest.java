@@ -32,8 +32,9 @@ class JpaOrderRepositoryAdapterTest {
         orders = new JpaOrderRepositoryAdapter(factory);
     }
 
+    // sprawdza czy oba produkty sa w bazie po zamowieniu
     @Test
-    void orderWithDifferentProductTypesIsStoredAndLoaded() {
+    void orderWithDifferentProducts() {
         Fuel fuel = new Fuel(UUID.randomUUID(), 5.0f, "Benzyna", "95");
         GeneralItem coffee = new GeneralItem(UUID.randomUUID(), 12.0f, "Kawa", ItemCategory.COFFEE);
         products.add(fuel);
@@ -51,8 +52,9 @@ class JpaOrderRepositoryAdapterTest {
         assertTrue(loaded.getProducts().stream().anyMatch(op -> op.getProduct() instanceof GeneralItem));
     }
 
+    //dodaje pozycje do zamowienia i sprawdza czy stara pozycja zostala, a suma sie zgadza
     @Test
-    void updateAddsNewItemsAndKeepsExistingOnes() {
+    void updateAddsItems() {
         Fuel fuel = new Fuel(UUID.randomUUID(), 5.0f, "Benzyna", "95");
         products.add(fuel);
 
@@ -69,8 +71,9 @@ class JpaOrderRepositoryAdapterTest {
         assertEquals(20.0f, reloaded.getTotalPrice(), 0.001f);
     }
 
+    // zmienia cene produktu po zlozeniu zamowienia i sprawdza czy zamowienie zachowuje stara cene
     @Test
-    void priceChangeDoesNotAffectExistingOrder() {
+    void priceChangeKeepsOrderPrice() {
         Fuel fuel = new Fuel(UUID.randomUUID(), 5.0f, "Benzyna", "95");
         products.add(fuel);
 
@@ -87,8 +90,9 @@ class JpaOrderRepositoryAdapterTest {
         assertEquals(9.0f, loaded.getProducts().get(0).getProduct().getPrice(), 0.001f);
     }
 
+    // findbyid dla nieistniejacego zamowienia zwraca null
     @Test
-    void findByIdReturnsNullForUnknownOrder() {
+    void findByIdReturnsNull() {
         assertNull(orders.findById(UUID.randomUUID()));
     }
 }

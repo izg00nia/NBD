@@ -23,8 +23,9 @@ class BusinessRuleTest {
         factory.close();
     }
 
+    // test sprawdzający czy cena zamówienienia się zgadza, jeśli nie doszło do zmiany ceny w trakcie gdy był "w koszyku"
     @Test
-    void orderWithCurrentPriceIsAccepted() {
+    void orderStablePrice() {
         JpaProductRepositoryAdapter products = new JpaProductRepositoryAdapter(factory);
         JpaOrderRepositoryAdapter orders = new JpaOrderRepositoryAdapter(factory);
 
@@ -38,8 +39,9 @@ class BusinessRuleTest {
         assertEquals(10.0f, orders.findById(order.getId()).getTotalPrice(), 0.001f);
     }
 
+    // test sprawdzający czy dojdzie do zakupu jeśli cena zamówienienia się nie zgadza, ponieważ doszło do zmiany ceny w trakcie gdy był "w koszyku"
     @Test
-    void orderWithOutdatedPriceIsRejected() {
+    void orderOutdatedPrice() {
         JpaProductRepositoryAdapter products = new JpaProductRepositoryAdapter(factory);
         JpaOrderRepositoryAdapter orders = new JpaOrderRepositoryAdapter(factory);
 
